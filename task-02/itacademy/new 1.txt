@@ -1,0 +1,19 @@
+# Virtual Hosts
+
+
+
+<VirtualHost *:8080>
+    ServerAdmin root@localhost
+    DocumentRoot "/var/www/01-demosite-static/"
+    ServerName localhost
+    ErrorLog "/var/log/httpd/01-demosite-static-error_log"
+    CustomLog "/var/log/httpd/01-demosite-static-access_log" common
+</VirtualHost>
+
+<VirtualHost *:8081>
+    ServerAdmin root@localhost
+    DocumentRoot "/var/www/01-demosite-php"
+    ServerName localhost
+    ErrorLog "/var/log/httpd/01-demosite-php-error_log"
+    CustomLog "/var/log/httpd/01-demosite-php-access_log" common
+</VirtualHost>
