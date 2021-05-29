@@ -40,7 +40,7 @@ Vagrant.configure("2") do |config|
 		sudo setenforce 0
 		echo "SELINUX=disabled" > /etc/selinux/config
 		
-		echo "Listen 8080\Listen 8081" >> /etc/httpd/conf/httpd.conf
+		echo -e "Listen 8080\nListen 8081" >> /etc/httpd/conf/httpd.conf
 		
 		echo "IncludeOptional sites-enabled/*.conf" >> /etc/httpd/conf/httpd.conf
 		
