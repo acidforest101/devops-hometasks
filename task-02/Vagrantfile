@@ -1,0 +1,111 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+	config.vm.box = "debian/buster64"
+	
+	config.vm.network "forwarded_port", guest: 8080, host: 8080
+	config.vm.network "forwarded_port", guest: 8081, host: 8081
+	
+	config.vm.provision :file, source: '../itacademy', destination:  "/home/vagrant/"
+	
+	config.vm.provision "shell", inline: <<-SHELL
+	
+		echo "Операции с Grub"
+		
+		sudo apt remove gnupg
+		sudo apt install --reinstall gnupg2
+		sudo apt install dirmngr
+	 
+		sudo apt-get install lxc lxc-templates -y
+		sudo systemctl enable lxc
+		sudo systemctl start lxc
+	SHELL
+	
+	config.vm.provision "shell", inline: <<-SHELL
+		echo "Добавляем id"
+		echo "lxc.net.0.type = veth
+		lxc.net.0.flags = up
+		lxc.net.0.link  = lxcbr0" >> /etc/lxc/default.conf
+	SHELL
+	
+	config.vm.provision "shell", inline: <<-SHELL
+		echo "Grub updates"
+		sudo update-grub2
+		sudo update-grub
+	SHELL
+	
+	config.vm.provision "shell", inline: <<-SHELL
+		echo "LXC-net"
+		
+		echo "vagrant veth lxcbr0 10" > /etc/lxc/lxc-usernet
+		echo "USE_LXC_BRIDGE="true"
+		LXC_BRIDGE="lxcbr0"
+		LXC_ADDR="10.0.3.1"
+		LXC_NETMASK="255.255.255.0"
+		LXC_NETWORK="10.0.3.0/24"
+		LXC_DHCP_RANGE="10.0.3.2,10.0.3.254"
+		LXC_DHCP_MAX="253"
+		LXC_DHCP_CONFILE=""
+		LXC_DOMAIN=""" >  /etc/default/lxc-net		
+		systemctl enable lxc-net
+		systemctl start lxc-net
+		systemctl restart lxc-net
+	SHELL
+	
+	config.vm.provision "shell", inline: <<-SHELL
+		echo "LXC1"
+		
+		sudo lxc-create -n cont8080 -t download -- --dist centos --release 8 --arch amd64
+		sudo lxc-start cont8080
+
+		sudo sleep 10
+		
+		sudo lxc-attach cont8080 -- yum install php httpd -y
+		sudo lxc-attach cont8080 -- systemctl enable httpd
+		sudo lxc-attach cont8080 -- systemctl start httpd
+		sudo lxc-attach cont8080 -- setenforce 0
+		sudo lxc-attach cont8080 -- echo "SELINUX=disabled" > /etc/selinux/config
+		sudo lxc-attach cont8080 -- echo "Listen 8080" >> /var/lib/lxc/cont8080/rootfs/etc/httpd/conf/httpd.conf
+		sudo lxc-attach cont8080 -- echo "IncludeOptional sites-enabled/*.conf" >> /var/lib/lxc/cont8080/rootfs/etc/httpd/conf/httpd.conf
+	
+		sudo mkdir /var/lib/lxc/cont8080/rootfs/var/www/html/01-demosite-static
+		sudo cp /home/vagrant/itacademy/01-demosite-static/index.html /var/lib/lxc/cont8080/rootfs/var/www/html/01-demosite-static/
+		
+		sudo cp /home/vagrant/itacademy/hometask2_1.conf /var/lib/lxc/cont8080/rootfs/etc/httpd/conf.d/
+		
+		sudo rm /var/lib/lxc/cont8080/rootfs/etc/httpd/conf.d/welcome.conf
+		
+		sudo lxc-attach cont8080 -- systemctl restart httpd
+	SHELL
+	
+	config.vm.provision "shell", inline: <<-SHELL
+		echo "LXC2"
+		
+		sudo lxc-create -n cont8081 -t download -- --dist centos --release 8 --arch amd64
+		sudo lxc-start cont8081
+
+		sudo sleep 10
+		
+		sudo lxc-attach cont8081 -- yum install php httpd -y
+		sudo lxc-attach cont8081 -- systemctl enable httpd
+		sudo lxc-attach cont8081 -- systemctl start httpd
+		sudo lxc-attach cont8081 -- setenforce 0
+		sudo lxc-attach cont8081 -- echo "SELINUX=disabled" > /etc/selinux/config
+		sudo lxc-attach cont8081 -- echo "Listen 8081" >> /var/lib/lxc/cont8081/rootfs/etc/httpd/conf/httpd.conf
+		sudo lxc-attach cont8081 -- echo "IncludeOptional sites-enabled/*.conf" >> /var/lib/lxc/cont8081/rootfs/etc/httpd/conf/httpd.conf
+	
+		sudo mkdir /var/lib/lxc/cont8081/rootfs/var/www/html/01-demosite-php
+		sudo cp /home/vagrant/itacademy/01-demosite-php/index.php /var/lib/lxc/cont8081/rootfs/var/www/html/01-demosite-php/
+		
+		sudo cp /home/vagrant/itacademy/hometask2_2.conf /var/lib/lxc/cont8081/rootfs/etc/httpd/conf.d/
+		
+		sudo rm /var/lib/lxc/cont8081/rootfs/etc/httpd/conf.d/welcome.conf
+		
+		sudo lxc-attach cont8081 -- systemctl restart httpd
+	SHELL
+	
+	config.vm.provision "shell", path: "ip.sh"
+
+	end
