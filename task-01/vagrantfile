@@ -63,6 +63,8 @@ Vagrant.configure("2") do |config|
 		sudo mv /tmp/hometask1.conf /etc/httpd/sites-available/
 		sudo ln -s /etc/httpd/sites-available/hometask1.conf /etc/httpd/sites-enabled/hometask1.conf
 		
+		sudo systemctl restart httpd
+		
 		
     SHELL
 
