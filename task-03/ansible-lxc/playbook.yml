@@ -1,0 +1,71 @@
+---
+- name: LXC setting
+  hosts: all
+  
+  tasks:
+    
+    - name: Grub remove
+      apt:
+        name: gnupg
+        state: absent
+        
+    - name: install packages
+      apt:
+        pkg:
+        - gnupg2
+        - dirmngr
+        - lxc
+        - lxc-templates
+        - python-lxc
+        
+    - name: enable and reload LXC
+      systemd:
+        name: lxc
+        enabled: yes
+        state: started
+        
+    - name: remove default.conf of LXC
+      file:
+        path: /etc/lxc/default.conf
+        state: absent
+        
+    - name: create default.conf
+      lineinfile:
+        state: present
+        create: yes
+        path: /etc/lxc/default.conf
+        line: "lxc.net.0.type = veth\nlxc.net.0.flags = up\nlxc.net.0.link  = lxcbr0"
+        
+    - name: lxc-usernet
+      lineinfile:
+        state: present
+        create: yes
+        path: /etc/lxc/lxc-usernet
+        line: "vagrant veth lxcbr0 10"
+        
+    - name: remove lxc-net config file
+      file:
+        path: /etc/default/lxc-net
+        state: absent
+        
+    - name: lxc-net settings
+      blockinfile:
+        create: yes
+        path: /etc/default/lxc-net
+        block: |
+          USE_LXC_BRIDGE="true"
+          LXC_BRIDGE="lxcbr0"
+          LXC_ADDR="10.0.3.1"
+          LXC_NETMASK="255.255.255.0"
+          LXC_NETWORK="10.0.3.0/24"
+          LXC_DHCP_RANGE="10.0.3.2,10.0.3.254"
+          LXC_DHCP_MAX="253"
+          LXC_DHCP_CONFILE=""
+          LXC_DOMAIN=""
+        
+    - name: enable and reload lxc-net
+      systemd:
+        name: lxc-net
+        enabled: yes
+        state: restarted
+        daemon_reload: yes

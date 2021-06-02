@@ -1,0 +1,96 @@
+---
+- name: LXC containers
+  hosts: all
+  
+  tasks:
+  
+    - name: Create a started cont8080
+      lxc_container:
+        name: cont8080
+        template: download
+        state: started
+        template_options: --dist centos --release 8 --arch amd64
+        container_command: |
+          sleep 10
+          yum update
+          yum install php -y
+          yum install httpd -y
+          systemctl enable httpd
+          systemctl start httpd
+          setenforce 0
+          echo "SELINUX=disabled" > /etc/selinux/config
+          echo "Listen 8080" >> /etc/httpd/conf/httpd.conf
+          mkdir /var/www/html/01-demosite-static
+          rm /etc/httpd/conf.d/welcome.conf
+          
+          
+    - name: Create a started cont8081
+      lxc_container:
+        name: cont8081
+        template: download
+        state: started
+        template_options: --dist centos --release 8 --arch amd64
+        container_command: |
+          sleep 10
+          dnf update
+          dnf install php httpd -y > /tmp/yum_output
+          yum install httpd -y
+          systemctl enable httpd
+          systemctl start httpd
+          setenforce 0
+          echo "SELINUX=disabled" > /etc/selinux/config
+          echo "Listen 8081" >> /etc/httpd/conf/httpd.conf
+          mkdir /var/www/html/01-demosite-php
+          rm /etc/httpd/conf.d/welcome.conf
+          
+    - name: Copy static files
+      copy:
+        src: /tmp/01-demosite-static/index.html
+        dest: /var/lib/lxc/cont8080/rootfs/var/www/html/01-demosite-static/index.html
+    
+    - name: Copy static config
+      copy:
+        src: /tmp/hometask2_1.conf
+        dest: /var/lib/lxc/cont8080/rootfs/etc/httpd/conf.d/hometask2_1.conf
+        
+    - name: Copy dynamic files
+      copy:
+        src: /tmp/01-demosite-php/index.php
+        dest: /var/lib/lxc/cont8081/rootfs/var/www/html/01-demosite-php/index.php
+        
+    - name: Copy dynamic config
+      copy:
+        src: /tmp/hometask2_2.conf
+        dest: /var/lib/lxc/cont8081/rootfs/etc/httpd/conf.d/hometask2_2.conf
+        
+    - name: Restarted httpd cont8080
+      lxc_container:
+        name: cont8080
+        container_log: true
+        container_command: |
+          systemctl restart httpd
+        
+    - name: Restarted httpd cont8081
+      lxc_container:
+        name: cont8081
+        container_log: true
+        container_command: |
+          systemctl restart httpd
+          
+#    - name: Restarted httpd cont8080
+#      lxc_container:
+#        name: "{{ item }}"
+#        container_log: true
+#        container_command: |
+#          systemctl restart httpd
+#        with_items:
+#          - cont8080
+#          - cont8081
+#          
+#    - name: unfreeze containers
+#      lxc_container:
+#        name: "{{ item }}"
+#        state: restarted
+#        with_items:
+#        - cont8080
+#        - cont8081
