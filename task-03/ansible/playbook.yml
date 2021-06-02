@@ -1,0 +1,70 @@
+---
+- name: create centos static and dynamic
+  hosts: all
+ 
+  tasks:
+    
+    - name: install nano and net-tools
+      yum: 
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - nano
+        - net-tools
+    
+    - name: change mod and own
+      file:
+        path: /var/www
+        owner: root
+        group: vagrant
+        mode: 775
+        recurse: yes
+        
+    - name: disable SElinux
+      selinux:
+        state: disabled
+        
+    - name: listen ports
+      lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen'
+        insertafter: '^#Listen'
+        line: "Listen 8080\nListen 8081"
+        
+#    - name: listen ports
+#      lineinfile:
+#        path: /etc/httpd/conf/httpd.conf
+#        regexp: '^Listen 8080'
+#        insertafter: '^Listen 8080'
+#        line: Listen 8081
+        
+    - name: make dir php
+      file:
+        path: /var/www/01-demosite-php
+        state: directory
+        
+    - name: make dir static
+      file:
+        path: /var/www/01-demosite-static
+        state: directory
+        
+    - name: copy DYNAMIC files from tmp
+      copy:
+        src: /tmp/01-demosite-php/index.php
+        dest: /var/www/01-demosite-php/index.php
+        owner: root
+        group: vagrant
+        mode: 775
+        
+    - name: copy STATIC files from
+      copy:
+        src: /tmp/01-demosite-static/index.html
+        dest: /var/www/01-demosite-static/index.html
+        owner: root
+        group: vagrant
+        mode: 775
+        
+    - name: copy conf file
+      copy:
+        src: /tmp/hometask1.conf
+        dest: /etc/httpd/conf.d/hometask1.conf
