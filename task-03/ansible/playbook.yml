@@ -68,3 +68,9 @@
       copy:
         src: /tmp/hometask1.conf
         dest: /etc/httpd/conf.d/hometask1.conf
+        
+    - name: restart apache
+      systemd:
+        name: httpd
+        enabled: yes
+        state: reloaded
