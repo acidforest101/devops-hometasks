@@ -29,8 +29,6 @@
         path: /etc/hosts
         block: |
           192.168.33.10    master.puppet    master    puppet
-          192.168.33.11    slave1.puppet    slave1
-          192.168.33.12    slave2.puppet    slave2
   
     - name: Install packages
       become: yes
@@ -97,7 +95,6 @@
         path: /etc/puppetlabs/puppet/puppet.conf
         block: |
           [agent]
-          certname = master.puppet
           server = master.puppet
       
     - name: Start and enable puppet-server
@@ -107,12 +104,12 @@
         state: restarted
         enabled: yes
         
-    - name: Checking container key is up to date in known_hosts
-      become_user: vagrant
-      shell: ssh-keyscan {{ item }} >> ~/.ssh/known_hosts
-      loop:
-        - '192.168.33.11'
-        - '192.168.33.12'
+#    - name: Checking container key is up to date in known_hosts
+#      become_user: vagrant
+#      shell: ssh-keyscan {{ item }} >> ~/.ssh/known_hosts
+#      loop:
+#        - '192.168.33.11'
+#        - '192.168.33.12'
         
     - name: puppet synchronise
       become: yes
@@ -135,8 +132,6 @@
         path: /etc/hosts
         block: |
           192.168.33.10    master.puppet    master    puppet
-          192.168.33.11    slave1.puppet    slave1
-          192.168.33.12    slave2.puppet    slave2
     
     - name: Install something
       become: yes
