@@ -104,12 +104,19 @@
         state: restarted
         enabled: yes
         
-#    - name: Checking container key is up to date in known_hosts
-#      become_user: vagrant
-#      shell: ssh-keyscan {{ item }} >> ~/.ssh/known_hosts
-#      loop:
-#        - '192.168.33.11'
-#        - '192.168.33.12'
+    - name: Start and enable puppet-agent
+      become: yes
+      systemd:
+        service: puppet
+        state: restarted
+        enabled: yes
+        
+    - name: Checking container key is up to date in known_hosts
+      become_user: vagrant
+      shell: ssh-keyscan {{ item }} >> ~/.ssh/known_hosts
+      loop:
+        - '192.168.33.11'
+        - '192.168.33.12'
         
     - name: puppet synchronise
       become: yes
@@ -155,7 +162,12 @@
         state: restarted
         enabled: yes
         
+        
+    - name: sleep
+      shell: sleep 60
+      
     - name: request from master
+      puppet:
       become: yes
-      become_method: su
-      shell: "/opt/puppetlabs/bin/puppet agent -t"
+#      become_method: su
+#      shell: "/opt/puppetlabs/bin/puppet agent -t"
