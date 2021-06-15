@@ -29,6 +29,7 @@ Vagrant.configure("2") do |config|
 	  sudo yum install ansible -y
 	  sudo sed -i '/#host_key_checking/c host_key_checking = false' /etc/ansible/ansible.cfg
 	  sudo sed -i '/#ssh_args/c ssh_args = -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes' /etc/ansible/ansible.cfg
+	  
 	SHELL
     
     machine.vm.provision :ansible_local do |ansible|
