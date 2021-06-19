@@ -1,0 +1,177 @@
+---
+- name: Provisioning for all
+  hosts: all
+  become: yes
+  tasks:
+  
+    - name: install nano
+      become: yes
+      yum:
+        state: installed
+        name:
+        - nano
+        
+    - name: INSTALL PUPPET REPO
+      become: yes
+      shell: sudo rpm -Uvh https://yum.puppet.com/puppet7-release-el-8.noarch.rpm
+      ignore_errors: yes
+      
+    - name: disable SELinux
+      selinux:
+        state: disabled
+
+
+
+- name: Master config
+  hosts: masters
+  become: yes
+  tasks:  
+  
+    - name: Add host master.puppet
+      become: yes
+      blockinfile:
+        path: /etc/hosts
+        block: |
+          192.168.33.10    master.puppet    master    puppet
+  
+    - name: Install packages
+      become: yes
+      yum:
+        state: installed
+        name:
+        - gem
+        
+    - name: INSTALL PUPPETSERVER
+      become: yes
+      yum:
+        name:
+        - puppetserver
+        - git
+        state: latest
+        
+    - name: INSTALL GEM r10k
+      become: yes
+      shell: gem install r10k
+      ignore_errors: yes
+      
+    - name: mkdir /etc/puppetlabs/r10k
+      become: yes
+      file:
+        state: directory
+        path: /etc/puppetlabs/r10k
+        
+    - name: create r10k.yml
+      become: yes
+      file:
+        path: /etc/puppetlabs/r10k/r10k.yml
+        state: touch
+
+    - name: add config inside r10k.yml
+      become: yes
+      blockinfile:
+        path: /etc/puppetlabs/r10k/r10k.yml
+        block: |
+          ---
+          :cachedir: '/var/cache/r10k'
+          :sources:
+            :my-org:
+              remote: 'https://github.com/acidforest101/control_repo.git'
+              basedir: '/etc/puppetlabs/code/environments'
+              
+    - name: Change RAM values
+      replace:
+        path: /etc/sysconfig/puppetserver
+        regexp: '-Xms2g -Xmx2g'
+        replace: '-Xms256m -Xmx256m'
+        
+    - name: Enable autosign ca puppet
+      become: yes
+      lineinfile:
+        path: /etc/puppetlabs/puppet/puppet.conf
+        regexp: '^autosign = true'
+        state: present
+        insertafter: EOF
+        line: 'autosign = true'
+              
+    - name: add agent in puppet.config
+      become: yes
+      blockinfile:
+        path: /etc/puppetlabs/puppet/puppet.conf
+        block: |
+          [agent]
+          server = master.puppet
+      
+    - name: Start and enable puppet-server
+      become: yes
+      systemd:
+        service: puppetserver
+        state: restarted
+        enabled: yes
+        
+    - name: Start and enable puppet-agent
+      become: yes
+      systemd:
+        service: puppet
+        state: restarted
+        enabled: yes
+        
+    - name: Checking container key is up to date in known_hosts
+      become_user: vagrant
+      shell: ssh-keyscan {{ item }} >> ~/.ssh/known_hosts
+      loop:
+        - '192.168.33.11'
+        - '192.168.33.12'
+        
+    - name: puppet synchronise
+      become: yes
+      become_method: su
+      shell: r10k deploy environment -p --config=/etc/puppetlabs/r10k/r10k.yml
+
+
+
+
+- name: Slaves config
+  hosts: slave
+  gather_facts: no
+  become: yes
+  tasks:
+    
+    
+    - name: Add host master.puppet
+      become: yes
+      blockinfile:
+        path: /etc/hosts
+        block: |
+          192.168.33.10    master.puppet    master    puppet
+    
+    - name: Install something
+      become: yes
+      yum:
+        state: installed
+        name:
+        - puppet-agent
+        
+    - name: add agent in puppet.config
+      become: yes
+      blockinfile:
+        path: /etc/puppetlabs/puppet/puppet.conf
+        block: |
+          [agent]
+          server = master.puppet
+        
+    - name: Start and enable puppet-agent
+      become: yes
+      systemd:
+        service: puppet
+        state: restarted
+        enabled: yes
+        
+        
+    - name: sleep
+      shell: sleep 60
+      
+    - name: request from master
+      puppet:
+      become: yes
+#      become_method: su
+#      shell: "/opt/puppetlabs/bin/puppet agent -t"

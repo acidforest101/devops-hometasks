@@ -1,0 +1,41 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/8"
+
+  config.vm.define "slave1" do |machine|
+    machine.vm.hostname = "slave1.puppet"
+    machine.vm.network "private_network", ip: "192.168.33.11"
+    machine.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
+  end
+
+  config.vm.define "slave2" do |machine|
+    machine.vm.hostname = "slave2.puppet"
+    machine.vm.network "forwarded_port", guest: 8081, host: 8081, host_ip: "127.0.0.1"
+    machine.vm.network "private_network", ip: "192.168.33.12"
+  end
+
+  config.vm.define "master" do |machine|
+    machine.vm.hostname = "master.puppet"
+    machine.vm.network "private_network", ip: "192.168.33.10"
+    machine.vm.provision :file, source: '.vagrant/machines/slave1/virtualbox/private_key', destination: '/home/vagrant/private_key_slave1.puppet'
+    machine.vm.provision :file, source: '.vagrant/machines/slave2/virtualbox/private_key', destination: '/home/vagrant/private_key_slave2.puppet'
+	
+    machine.vm.provision "shell", inline: <<-SHELL
+      sudo chmod 600 /home/vagrant/private_key_slave1.puppet
+      sudo chmod 600 /home/vagrant/private_key_slave2.puppet
+      sudo yum install centos-release-ansible-29.noarch -y
+      sudo yum install ansible -y
+      sudo sed -i '/#host_key_checking/c host_key_checking = false' /etc/ansible/ansible.cfg
+      sudo sed -i '/#ssh_args/c ssh_args = -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes' /etc/ansible/ansible.cfg
+    SHELL
+
+    machine.vm.provision :ansible_local do |ansible|
+      ansible.playbook          = "playbook.yaml"
+      ansible.become            = "yes"
+      ansible.limit             = "all"
+      ansible.inventory_path    = "inventory"
+    end
+  end
+end
