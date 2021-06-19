@@ -15,6 +15,10 @@
       become: yes
       shell: sudo rpm -Uvh https://yum.puppet.com/puppet7-release-el-8.noarch.rpm
       ignore_errors: yes
+      
+    - name: disable SELinux
+      selinux:
+        state: disabled
 
 
 
