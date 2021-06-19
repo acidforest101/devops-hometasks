@@ -122,6 +122,7 @@
       loop:
         - '192.168.33.11'
         - '192.168.33.12'
+        - '192.168.33.15'
         
     - name: puppet synchronise
       become: yes
@@ -175,6 +176,7 @@
     - name: request from master
       puppet:
       become: yes
+      ignore_errors: yes
 #      become_method: su
 #      shell: "/opt/puppetlabs/bin/puppet agent -t"
 
@@ -223,3 +225,4 @@
     - name: request from master
       puppet:
       become: yes
+      ignore_errors: yes
