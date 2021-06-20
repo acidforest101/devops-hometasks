@@ -4,16 +4,6 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "centos/8"
 
-  config.vm.define "mineserver" do |minecraft|
-    minecraft.vm.hostname = "mineserver.puppet"
-    minecraft.vm.network "private_network", ip: "192.168.33.15"
-	minecraft.vm.provider "virtualbox" do |minecraft|
-      minecraft.memory = 4096
-	  minecraft.cpus = 2
-    end
-  end
-
-
   config.vm.define "slave1" do |machine|
     machine.vm.hostname = "slave1.puppet"
     machine.vm.network "private_network", ip: "192.168.33.11"
@@ -24,6 +14,15 @@ Vagrant.configure("2") do |config|
     machine.vm.hostname = "slave2.puppet"
     machine.vm.network "forwarded_port", guest: 8081, host: 8081, host_ip: "127.0.0.1"
     machine.vm.network "private_network", ip: "192.168.33.12"
+  end
+  
+  config.vm.define "mineserver" do |machine|
+    machine.vm.hostname = "mineserver.puppet"
+    machine.vm.network "private_network", ip: "192.168.33.15"
+	machine.vm.provider "virtualbox" do |machine|
+      machine.memory = 4096
+	  machine.cpus = 2
+    end
   end
   
   config.vm.define "master" do |machine|

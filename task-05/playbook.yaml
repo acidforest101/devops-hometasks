@@ -133,7 +133,7 @@
 
 
 - name: Slaves config
-  hosts: slave
+  hosts: slave, gameserver
   gather_facts: no
   become: yes
   tasks:
@@ -170,59 +170,12 @@
         enabled: yes
         
         
-    - name: sleep
-      shell: sleep 60
-      
-    - name: request from master
-      puppet:
-      become: yes
-      ignore_errors: yes
+#    - name: sleep
+#      shell: sleep 60
+#      
+#    - name: request from master
+#      puppet:
+#      become: yes
+#      ignore_errors: yes
 #      become_method: su
 #      shell: "/opt/puppetlabs/bin/puppet agent -t"
-
-
-- name: minecraft server config
-  hosts: gameserver
-  gather_facts: no
-  become: yes
-  tasks:
-    
-    
-    - name: Add host master.puppet
-      become: yes
-      blockinfile:
-        path: /etc/hosts
-        block: |
-          192.168.33.10    master.puppet    master    puppet
-    
-    - name: Install something
-      become: yes
-      yum:
-        state: installed
-        name:
-        - puppet-agent
-        
-    - name: add agent in puppet.config
-      become: yes
-      blockinfile:
-        path: /etc/puppetlabs/puppet/puppet.conf
-        block: |
-          [agent]
-          server = master.puppet
-          runinterval = 1m
-        
-    - name: Start and enable puppet-agent
-      become: yes
-      systemd:
-        service: puppet
-        state: restarted
-        enabled: yes
-        
-        
-    - name: sleep
-      shell: sleep 60
-      
-    - name: request from master
-      puppet:
-      become: yes
-      ignore_errors: yes
