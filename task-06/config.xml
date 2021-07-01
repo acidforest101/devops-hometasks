@@ -65,4 +65,4 @@ ls -l artifacts/
       <goVersion>Go 1.13.15</goVersion>
     </org.jenkinsci.plugins.golang.GolangBuildWrapper>
   </buildWrappers>
-</project>vagrant@jenkins:/var/lib/jenkins/jobs/gobuild$
+</project>
