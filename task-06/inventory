@@ -1,0 +1,20 @@
+[staging]
+staging.vm ansible_host=192.168.66.12 ansible_ssh_private_key_file=/home/vagrant/private_key_staging
+
+[production]
+production.vm ansible_host=192.168.66.13 ansible_ssh_private_key_file=/home/vagrant/private_key_prod
+
+[servers]
+production.vm ansible_host=192.168.66.13 ansible_ssh_private_key_file=/home/vagrant/private_key_prod
+staging.vm ansible_host=192.168.66.12 ansible_ssh_private_key_file=/home/vagrant/private_key_staging
+
+[artifact]
+nexus.vm ansible_host=192.168.66.11 ansible_ssh_user=vagrant ansible_ssh_private_key_file=/home/vagrant/private_key_nexus
+
+[jenkins]
+jenkins.vm ansible_host=192.168.66.10 ansible_connection=local
+
+[all:vars]
+ansible_connection=ssh
+ansible_user=vagrant
+ansible_become_password=vagrant

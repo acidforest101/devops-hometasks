@@ -1,0 +1,4 @@
+---
+- src: geerlingguy.java
+- src: geerlingguy.jenkins
+- src: ansible-thoteam.nexus3-oss
