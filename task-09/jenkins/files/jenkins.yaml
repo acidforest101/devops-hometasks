@@ -1,0 +1,48 @@
+---
+- name: PROVISION JENKINS
+  hosts: localhost
+  become: true
+  pre_tasks:
+    - name: install packages
+      apt:
+        state: latest
+        name: "{{ item }}"
+      loop:
+        - nano
+        - git
+        - wget
+        
+    # - copy:
+        # src: /tmp/files/jenkins/
+        # dest: /var/lib/jenkins/
+        # owner: jenkins
+        # group: jenkins
+          
+    - name: remove file 
+      file:
+        path: /var/lib/jenkins/identity.key.enc
+        state: absent
+        
+  vars:
+    jenkins_java_options: "-Djenkins.install.runSetupWizard=false -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true"
+    jenkins_plugins:
+      - golang
+      - git
+      - github
+      - nexus-artifact-uploader
+      - publish-over-ssh
+      - pipeline
+      - ssh-agent
+      - timestampers
+      - ssh
+      
+  post_tasks:
+    - copy:
+        src: /tmp/files/jenkins/
+        dest: /var/lib/jenkins/
+        owner: jenkins
+        group: jenkins
+      
+  roles:
+    - role: geerlingguy.java
+    - role: geerlingguy.jenkins
