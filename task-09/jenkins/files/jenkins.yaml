@@ -8,21 +8,10 @@
         state: latest
         name: "{{ item }}"
       loop:
-        - nano
+        - vim
         - git
         - wget
-        
-    # - copy:
-        # src: /tmp/files/jenkins/
-        # dest: /var/lib/jenkins/
-        # owner: jenkins
-        # group: jenkins
-          
-    - name: remove file 
-      file:
-        path: /var/lib/jenkins/identity.key.enc
-        state: absent
-        
+
   vars:
     jenkins_java_options: "-Djenkins.install.runSetupWizard=false -Dhudson.security.csrf.DefaultCrumbIssuer.EXCLUDE_SESSION_ID=true"
     jenkins_plugins:
@@ -35,14 +24,26 @@
       - ssh-agent
       - timestampers
       - ssh
-      
+
   post_tasks:
     - copy:
         src: /tmp/files/jenkins/
         dest: /var/lib/jenkins/
         owner: jenkins
         group: jenkins
-      
+
+    - name: remove identity key
+      file:
+        path: /var/lib/jenkins/identity.key.enc
+        state: absent
+
+    - name: wait for jenkins started
+      shell: sleep 20
+
+    - name: restart jenkins
+      service:
+        name: jenkins
+        state: restarted
   roles:
     - role: geerlingguy.java
     - role: geerlingguy.jenkins
